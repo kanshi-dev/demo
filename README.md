@@ -1,62 +1,81 @@
-# Kanshi Monitoring System
+# 🚀 Kanshi Monitoring System
 
-Kanshi is a monitoring solution built with a core service for data collection, a TimescaleDB-powered database for efficient metrics storage, and a dashboard for visualization.
+Kanshi is a lightweight, high-performance monitoring solution. It features a central core service for data collection, a **TimescaleDB**-powered database for efficient metrics storage, and a beautiful **Dashboard** for real-time visualization.
 
-## Architecture
+## 🏛️ Architecture
 
-The system consists of three main components:
-- **[Kanshi Core](https://github.com/kanshi-dev/core)**: The central service that receives metrics from agents.
-- **TimescaleDB**: A time-series database optimized for metrics storage.
-- **[Kanshi Dashboard](https://github.com/kanshi-dev/dashboard)**: A user-friendly web interface to visualize metrics and monitor your infrastructure.
-- **[Kanshi Agent](https://github.com/kanshi-dev/agent)**: A lightweight component installed on the machines you want to monitor, which collects and sends data to the core.
+The system consists of four main components:
+- **[Kanshi Core](https://github.com/kanshi-dev/core)**: The central hub that receives and processes metrics.
+- **TimescaleDB**: A time-series database optimized for high-volume metrics storage.
+- **[Kanshi Dashboard](https://github.com/kanshi-dev/dashboard)**: A user-friendly web interface to visualize your infrastructure.
+- **[Kanshi Agent](https://github.com/kanshi-dev/agent)**: A lightweight binary installed on servers to collect and report data.
 
-## Prerequisites
+---
 
+## 🛠️ Prerequisites
+
+Ensure you have the following installed:
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Getting Started
+---
 
-### 1. Configure the Environment
+## 🏁 Quick Start
 
-Create a `.env` file in the root directory with the following database credentials:
+Get your monitoring stack up and running in 4 simple steps:
 
+### 1. Clone the Repository
+Start by cloning the demo stack to your local machine:
+
+```bash
+git clone https://github.com/kanshi-dev/demo.git
+cd demo
+```
+
+### 2. Set Up Environment
+Copy the example environment file and update your credentials:
+
+```bash
+cp .env.example .env
+```
+
+The default configuration in `.env` is:
 ```env
 DB_HOST="db"
 DB_PORT="5432"
 DB_USER="kanshi"
-DB_PASSWORD="yourpassword"
+DB_PASSWORD="your_secure_password_here"
 DB_NAME="kanshi"
 ```
 
-### 2. Start the Monitoring Stack
-
-Run the following command to start the core service, dashboard, and database:
+### 3. Launch the Stack
+Start the core service, dashboard, and database:
 
 ```bash
 docker-compose up -d
 ```
 
-This will:
-- Initialize the TimescaleDB database with the required schema (`core-schema.sql`).
-- Start the core service on ports `8080` (HTTP) and `50051` (gRPC).
-- Start the dashboard on port `80`.
+This command will:
+- ✅ Initialize **TimescaleDB** with the required schema.
+- ✅ Start **Kanshi Core** on ports `8080` (HTTP) and `50051` (gRPC).
+- ✅ Start the **Dashboard** on port `80`.
 
-### 3. Deploy the Kanshi Agent
+### 4. Deploy an Agent
+Download the latest [Kanshi Agent (v0.1.0)](https://github.com/kanshi-dev/agent/releases/tag/v0.1.0) for your platform.
 
-The Kanshi agent is used to collect metrics from your servers. Download the latest release (v0.1.0) for your platform from:
-
-👉 [Kanshi Agent v0.1.0 Releases](https://github.com/kanshi-dev/agent/releases/tag/v0.1.0)
-
-Once downloaded, run the agent on the target machine, pointing it to your Kanshi Core service address. For example:
+Run it on any machine you want to monitor, pointing it to your Core service:
 
 ```bash
-KANSHI_CORE_ADDR=core_url:50051 ./kanshi-agent
+# Replace 'your_core_ip' with the actual IP/hostname of your Kanshi Core
+KANSHI_CORE_ADDR=your_core_ip:50051 ./kanshi-agent
 ```
 
-## Visualization
+---
 
-After the services are up and running, you can access the Kanshi Dashboard by navigating to `http://localhost` in your web browser.
+## 📊 Visualization
+
+Once the stack is running, open your browser and navigate to:
+👉 **[http://localhost](http://localhost)**
 
 ### Agent Overview
 ![Agents](imgs/agents.png)
@@ -64,9 +83,10 @@ After the services are up and running, you can access the Kanshi Dashboard by na
 ### Detailed Metrics
 ![Agent Details](imgs/agent-details.png)
 
-## Database Schema
+---
 
-The system uses `core-schema.sql` to automatically set up the `metrics` hypertable and `agents` table in TimescaleDB.
+## 🗄️ Database Details
 
-- **Metrics Table**: Stores time-series data (agent_id, name, value, ts, tags).
-- **Agents Table**: Stores metadata about monitored machines (hostname, OS, platform, hardware specs).
+The system automatically configures the database using `core-schema.sql`:
+- **Metrics**: A hypertable for time-series data (agent_id, name, value, timestamp, tags).
+- **Agents**: Metadata about monitored hosts (OS, platform, hardware specs).

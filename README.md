@@ -4,11 +4,12 @@ Kanshi is a lightweight, high-performance monitoring solution. It features a cen
 
 ## 🏛️ Architecture
 
-The system consists of four main components:
+The system consists of five main components:
 - **[Kanshi Core](https://github.com/kanshi-dev/core)**: The central hub that receives and processes metrics.
 - **TimescaleDB**: A time-series database optimized for high-volume metrics storage.
 - **[Kanshi Dashboard](https://github.com/kanshi-dev/dashboard)**: A user-friendly web interface to visualize your infrastructure.
 - **[Kanshi Agent](https://github.com/kanshi-dev/agent)**: A lightweight binary installed on servers to collect and report data.
+- **[Kanshi Infra](https://github.com/kanshi-dev/infra)**: Terraform modules for automated infrastructure provisioning.
 
 ---
 

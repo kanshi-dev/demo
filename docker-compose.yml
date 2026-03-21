@@ -8,6 +8,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - ./core-schema.sql:/docker-entrypoint-initdb.d/core-schema.sql
+      - ./metrics-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
@@ -20,7 +21,7 @@ services:
       - kanshi-network
 
   core:
-    image: johnyoat/kanshi-core:0.1.0
+    image: johnyoat/kanshi-core:latest
     env_file:
       - .env
     ports:
@@ -31,8 +32,10 @@ services:
         condition: service_healthy
     networks:
       - kanshi-network
+    restart: always
+
   dashboard:
-    image: johnyoat/kanshi-ui:0.1.0
+    image: johnyoat/kanshi-ui:latest
     ports:
       - "80:80"
     depends_on:
@@ -40,6 +43,7 @@ services:
         condition: service_started
     networks:
       - kanshi-network
+    restart: always
 
 networks:
   kanshi-network:

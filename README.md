@@ -1,6 +1,6 @@
 # Kanshi demo
 
-Run Kanshi locally from the current release-candidate source. This repository is the fastest self-contained path for testing the dashboard, core, TimescaleDB, and an agent without creating AWS resources.
+Run Kanshi locally from the current stable release. This repository is the fastest self-contained path for testing the dashboard, core, TimescaleDB, and an agent without creating AWS resources.
 
 ## Requirements
 
@@ -12,20 +12,12 @@ Run Kanshi locally from the current release-candidate source. This repository is
 ```sh
 git clone https://github.com/kanshi-dev/demo.git
 cd demo
-cp .env.example .env
-
-db_password=$(openssl rand -hex 32)
-ingest_key=$(openssl rand -hex 32)
-dashboard_key=$(openssl rand -hex 32)
-sed -i.bak "s/generate-db-password/$db_password/; s/generate-ingest-key/$ingest_key/; s/generate-dashboard-key/$dashboard_key/" .env
-rm -f .env.bak
-
-docker compose up -d
+make up
 ```
 
-The first start builds Core and Dashboard `v1.0.0` from their public Git tags. Core initializes the schema and 30-day retention policy.
+`make up` generates a private `.env`, pulls Core and Dashboard `v1.0.0`, starts the stack, and prints the dashboard key. Core initializes the schema and 30-day retention policy.
 
-Open [http://localhost:3000](http://localhost:3000) and enter `KANSHI_DASHBOARD_KEY` from `.env`.
+Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
 ## Install an agent
 
@@ -35,8 +27,7 @@ Use an address reachable from the monitored host:
 curl -fsSL https://kanshi.dev/install.sh |
   KANSHI_VERSION=v1.0.0 sh
 
-export KANSHI_CORE_ADDR=your-server:50051
-export KANSHI_API_KEY=the-ingest-key-from-.env
+eval "$(KANSHI_CORE_ADDR=your-server:50051 make agent-env)"
 kanshi-agent
 ```
 
@@ -71,9 +62,9 @@ curl -H "Authorization: Bearer $dashboard_key" \
 ## Stop
 
 ```sh
-docker compose down
+make down
 ```
 
-Add `-v` only when you also want to delete local metrics.
+Run `make reset` when you also want to delete local metrics and regenerate keys on the next start.
 
 For the AWS test environment, use the [Terraform demo](https://github.com/kanshi-dev/infra/tree/main/deployment/infra). For component details, see the [Kanshi documentation](https://kanshi.dev/docs/).

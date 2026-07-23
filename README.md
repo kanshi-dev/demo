@@ -67,4 +67,4 @@ make down
 
 Run `make reset` when you also want to delete local metrics and regenerate keys on the next start.
 
-For the AWS test environment, use the [Terraform demo](https://github.com/kanshi-dev/infra/tree/main/deployment/infra). For component details, see the [Kanshi documentation](https://kanshi.dev/docs/).
+For the AWS test environment, use the [Terraform demo](https://github.com/kanshi-dev/infra). For component details, see the [Kanshi documentation](https://kanshi.dev/docs/).

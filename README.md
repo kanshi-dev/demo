@@ -23,7 +23,7 @@ rm -f .env.bak
 docker compose up -d
 ```
 
-The first start builds Core `v1.0.0-rc3` and Dashboard `v1.0.0-rc4` from their public Git tags. Core initializes the schema and 30-day retention policy.
+The first start builds Core and Dashboard `v1.0.0` from their public Git tags. Core initializes the schema and 30-day retention policy.
 
 Open [http://localhost:3000](http://localhost:3000) and enter `KANSHI_DASHBOARD_KEY` from `.env`.
 
@@ -33,7 +33,7 @@ Use an address reachable from the monitored host:
 
 ```sh
 curl -fsSL https://kanshi.dev/install.sh |
-  KANSHI_VERSION=v1.0.0-rc3 sh
+  KANSHI_VERSION=v1.0.0 sh
 
 export KANSHI_CORE_ADDR=your-server:50051
 export KANSHI_API_KEY=the-ingest-key-from-.env
@@ -44,7 +44,7 @@ For systemd Linux:
 
 ```sh
 curl -fsSL https://kanshi.dev/install.sh |
-  sudo KANSHI_VERSION=v1.0.0-rc3 \
+  sudo KANSHI_VERSION=v1.0.0 \
   KANSHI_CORE_ADDR=your-server:50051 \
   KANSHI_API_KEY=the-ingest-key-from-.env \
   sh -s -- --systemd

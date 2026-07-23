@@ -1,50 +1,45 @@
 services:
   db:
-    image: timescale/timescaledb:latest-pg16
+    image: timescale/timescaledb:latest-pg17
+    restart: unless-stopped
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      POSTGRES_DB: kanshi
+      POSTGRES_USER: kanshi
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ./core-schema.sql:/docker-entrypoint-initdb.d/core-schema.sql
-      - ./metrics-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - kanshi_db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: always
-    networks:
-      - kanshi-network
+      test: [CMD-SHELL, pg_isready -U kanshi]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   core:
-    image: johnyoat/kanshi-core:latest
-    env_file:
-      - .env
-    ports:
-      - "8080:8080"
-      - "50051:50051"
+    build: https://github.com/kanshi-dev/core.git#v${CORE_VERSION}
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - kanshi-network
-    restart: always
+    environment:
+      DB_HOST: db
+      DB_USER: kanshi
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: kanshi
+      KANSHI_API_KEY: ${KANSHI_API_KEY}
+      KANSHI_DASHBOARD_KEY: ${KANSHI_DASHBOARD_KEY}
+      KANSHI_ALLOWED_ORIGINS: ${KANSHI_ALLOWED_ORIGINS}
+    ports:
+      - "8080:8080"
+      - "50051:50051"
 
   dashboard:
-    image: johnyoat/kanshi-ui:latest
-    ports:
-      - "80:80"
+    build: https://github.com/kanshi-dev/dashboard.git#v${DASHBOARD_VERSION}
+    restart: unless-stopped
     depends_on:
       core:
-        condition: service_started
-    networks:
-      - kanshi-network
-    restart: always
+        condition: service_healthy
+    ports:
+      - "3000:80"
 
-networks:
-  kanshi-network:
-    driver: bridge
+volumes:
+  kanshi_db:

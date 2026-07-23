@@ -1,93 +1,79 @@
-# 🚀 Kanshi Monitoring System
+# Kanshi demo
 
-Kanshi is a lightweight, high-performance monitoring solution. It features a central core service for data collection, a **TimescaleDB**-powered database for efficient metrics storage, and a beautiful **Dashboard** for real-time visualization.
+Run Kanshi locally from the current release-candidate source. This repository is the fastest self-contained path for testing the dashboard, core, TimescaleDB, and an agent without creating AWS resources.
 
-## 🏛️ Architecture
+## Requirements
 
-The system consists of five main components:
-- **[Kanshi Core](https://github.com/kanshi-dev/core)**: The central hub that receives and processes metrics.
-- **TimescaleDB**: A time-series database optimized for high-volume metrics storage.
-- **[Kanshi Dashboard](https://github.com/kanshi-dev/dashboard)**: A user-friendly web interface to visualize your infrastructure.
-- **[Kanshi Agent](https://github.com/kanshi-dev/agent)**: A lightweight binary installed on servers to collect and report data.
-- **[Kanshi Infra](https://github.com/kanshi-dev/infra)**: Terraform modules for automated infrastructure provisioning.
+- Docker with Compose
+- OpenSSL
 
----
+## Start the stack
 
-## 🛠️ Prerequisites
-
-Ensure you have the following installed:
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-
----
-
-## 🏁 Quick Start
-
-Get your monitoring stack up and running in 4 simple steps:
-
-### 1. Clone the Repository
-Start by cloning the demo stack to your local machine:
-
-```bash
+```sh
 git clone https://github.com/kanshi-dev/demo.git
 cd demo
-```
-
-### 2. Set Up Environment
-Copy the example environment file and update your credentials:
-
-```bash
 cp .env.example .env
+
+db_password=$(openssl rand -hex 32)
+ingest_key=$(openssl rand -hex 32)
+dashboard_key=$(openssl rand -hex 32)
+sed -i.bak "s/generate-db-password/$db_password/; s/generate-ingest-key/$ingest_key/; s/generate-dashboard-key/$dashboard_key/" .env
+rm -f .env.bak
+
+docker compose up -d
 ```
 
-The default configuration in `.env` is:
-```env
-DB_HOST="db"
-DB_PORT="5432"
-DB_USER="kanshi"
-DB_PASSWORD="your_secure_password_here"
-DB_NAME="kanshi"
+The first start builds Core `v1.0.0-rc3` and Dashboard `v1.0.0-rc4` from their public Git tags. Core initializes the schema and 30-day retention policy.
+
+Open [http://localhost:3000](http://localhost:3000) and enter `KANSHI_DASHBOARD_KEY` from `.env`.
+
+## Install an agent
+
+Use an address reachable from the monitored host:
+
+```sh
+curl -fsSL https://kanshi.dev/install.sh |
+  KANSHI_VERSION=v1.0.0-rc3 sh
+
+export KANSHI_CORE_ADDR=your-server:50051
+export KANSHI_API_KEY=the-ingest-key-from-.env
+kanshi-agent
 ```
 
-### 3. Launch the Stack
-Start the core service, dashboard, and database:
+For systemd Linux:
 
-```bash
-docker-compose up -d
+```sh
+curl -fsSL https://kanshi.dev/install.sh |
+  sudo KANSHI_VERSION=v1.0.0-rc3 \
+  KANSHI_CORE_ADDR=your-server:50051 \
+  KANSHI_API_KEY=the-ingest-key-from-.env \
+  sh -s -- --systemd
 ```
 
-This command will:
-- ✅ Initialize **TimescaleDB** with the required schema.
-- ✅ Start **Kanshi Core** on ports `8080` (HTTP) and `50051` (gRPC).
-- ✅ Start the **Dashboard** on port `80`.
+## Verify
 
-### 4. Deploy an Agent
-Download the latest [Kanshi Agent (v0.1.0)](https://github.com/kanshi-dev/agent/releases/tag/v0.1.0) for your platform.
-
-Run it on any machine you want to monitor, pointing it to your Core service:
-
-```bash
-# Replace 'your_core_ip' with the actual IP/hostname of your Kanshi Core
-KANSHI_CORE_ADDR=your_core_ip:50051 ./kanshi-agent
+```sh
+curl http://localhost:8080/health
+curl -H "Authorization: Bearer $dashboard_key" \
+  http://localhost:8080/api/v1/agents
 ```
 
----
+## Screens
 
-## 📊 Visualization
+### Fleet overview
 
-Once the stack is running, open your browser and navigate to:
-👉 **[http://localhost](http://localhost)**
+![Kanshi fleet overview](imgs/agents.png)
 
-### Agent Overview
-![Agents](imgs/agents.png)
+### Agent details
 
-### Detailed Metrics
-![Agent Details](imgs/agent-details.png)
+![Kanshi agent details](imgs/agent-details.png)
 
----
+## Stop
 
-## 🗄️ Database Details
+```sh
+docker compose down
+```
 
-The system automatically configures the database using `core-schema.sql`:
-- **Metrics**: A hypertable for time-series data (agent_id, name, value, timestamp, tags).
-- **Agents**: Metadata about monitored hosts (OS, platform, hardware specs).
+Add `-v` only when you also want to delete local metrics.
+
+For the AWS test environment, use the [Terraform demo](https://github.com/kanshi-dev/infra/tree/main/deployment/infra). For component details, see the [Kanshi documentation](https://kanshi.dev/docs/).

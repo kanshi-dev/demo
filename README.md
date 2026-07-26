@@ -41,6 +41,16 @@ curl -fsSL https://kanshi.dev/install.sh |
   sh -s -- --systemd
 ```
 
+## Try alerting
+
+The stack ships a bundled webhook sink and configures Core to deliver signed alert webhooks to it. Fire a sample alert without installing an agent:
+
+```sh
+make demo-alert
+```
+
+This seeds a high CPU sample and an enabled `cpu.used_percent > 90` rule, then prints the webhook Core delivered to the sink, including its `X-Kanshi-Signature`. Manage rules and watch active alerts and history on the dashboard **Alerts** page, and stream deliveries with `make alert-logs`.
+
 ## Verify
 
 ```sh

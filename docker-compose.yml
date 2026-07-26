@@ -28,6 +28,9 @@ services:
       KANSHI_API_KEY: ${KANSHI_API_KEY}
       KANSHI_DASHBOARD_KEY: ${KANSHI_DASHBOARD_KEY}
       KANSHI_ALLOWED_ORIGINS: ${KANSHI_ALLOWED_ORIGINS}
+      KANSHI_ALERT_INTERVAL: "10s"
+      KANSHI_WEBHOOK_URLS: http://alert-sink:9000
+      KANSHI_WEBHOOK_SECRET: ${KANSHI_WEBHOOK_SECRET}
     ports:
       - "8080:8080"
       - "50051:50051"
@@ -40,6 +43,13 @@ services:
         condition: service_healthy
     ports:
       - "3000:80"
+
+  alert-sink:
+    image: python:3-alpine
+    restart: unless-stopped
+    command: ["python", "/sink.py"]
+    volumes:
+      - ./alert-sink.py:/sink.py:ro
 
 volumes:
   kanshi_db:

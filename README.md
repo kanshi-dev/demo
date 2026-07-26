@@ -15,7 +15,7 @@ cd demo
 make up
 ```
 
-`make up` generates a private `.env`, pulls Core and Dashboard `v1.0.0`, starts the stack, and prints the dashboard key. Core initializes the schema and 30-day retention policy.
+`make up` generates a private `.env`, pulls Core and Dashboard `v1.1.0`, starts the stack, and prints the dashboard key. Core initializes the schema and 30-day retention policy.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 

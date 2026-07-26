@@ -35,16 +35,20 @@ logs:
 	docker compose logs -f
 
 demo-alert: .env
-	@# Seed a fresh CPU sample and a firing rule so Core delivers a signed webhook to the bundled sink.
-	@docker compose exec -T db psql -U kanshi -d kanshi -c "INSERT INTO metrics (agent_id, name, value, ts) VALUES ('demo-agent', 'cpu.used_percent', 95, NOW());" >/dev/null
-	@curl -fsS -X POST http://localhost:8080/api/v1/alerts/rules \
-		-H "Authorization: Bearer $$(sed -n 's/^KANSHI_DASHBOARD_KEY=//p' .env)" \
+	@key=$$(sed -n 's/^KANSHI_DASHBOARD_KEY=//p' .env); \
+	base=http://localhost:8080/api/v1; \
+	agent=$$(curl -fsS -H "Authorization: Bearer $$key" $$base/agents | grep -o '"agentId":"[^"]*"' | head -1 | cut -d'"' -f4); \
+	if [ -z "$$agent" ]; then echo "No agents are reporting yet. Install an agent (see above) and rerun."; exit 0; fi; \
+	if ! curl -fsS -H "Authorization: Bearer $$key" "$$base/metrics/aggregate?agentId=$$agent&name=mem.used_percent&interval=30s" | grep -q '"avgValue"'; then \
+		echo "No recent memory metrics from $$agent yet. Wait for it to report and rerun."; exit 0; fi; \
+	curl -fsS -X POST $$base/alerts/rules \
+		-H "Authorization: Bearer $$key" \
 		-H 'Content-Type: application/json' \
-		-d '{"name":"Demo high CPU","metric":"cpu.used_percent","comparator":"gt","threshold":90,"enabled":true}' >/dev/null
-	@printf 'Created a firing CPU rule for demo-agent. Waiting for evaluation...\n'
-	@sleep 15
-	@printf '\n--- alert-sink log (delivered webhook) ---\n'
-	@docker compose logs --tail=20 alert-sink
+		-d '{"name":"Demo high memory","metric":"mem.used_percent","comparator":"gt","threshold":1,"enabled":true}' >/dev/null; \
+	printf 'Created a memory alert rule that %s already breaches. Waiting for evaluation...\n' "$$agent"; \
+	sleep 15; \
+	printf '\n--- alert-sink log (delivered webhook) ---\n'; \
+	docker compose logs --tail=20 alert-sink
 
 alert-logs:
 	docker compose logs -f alert-sink

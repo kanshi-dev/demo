@@ -43,13 +43,13 @@ curl -fsSL https://kanshi.dev/install.sh |
 
 ## Try alerting
 
-The stack ships a bundled webhook sink and configures Core to deliver signed alert webhooks to it. Fire a sample alert without installing an agent:
+The stack ships a bundled webhook sink and configures Core to deliver signed alert webhooks to it. Once an agent is reporting (see above), fire a sample alert on real data:
 
 ```sh
 make demo-alert
 ```
 
-This seeds a high CPU sample and an enabled `cpu.used_percent > 90` rule, then prints the webhook Core delivered to the sink, including its `X-Kanshi-Signature`. Manage rules and watch active alerts and history on the dashboard **Alerts** page, and stream deliveries with `make alert-logs`.
+This checks for a reporting agent and its memory metrics, creates an enabled `mem.used_percent > 1` rule that live data breaches, and prints the signed webhook Core delivers, including its `X-Kanshi-Signature`. If no agent is reporting yet, it says so instead of fabricating data. Manage rules and watch active alerts and history on the dashboard **Alerts** page, and stream deliveries with `make alert-logs`.
 
 ## Verify
 

@@ -21,25 +21,20 @@ Open [http://localhost:3000](http://localhost:3000) and enter the printed dashbo
 
 ## Install an agent
 
-Use an address reachable from the monitored host:
+Install the agent on your machine:
 
 ```sh
-curl -fsSL https://kanshi.dev/install.sh |
-  KANSHI_VERSION=v1.0.0 sh
+curl -fsSL https://kanshi.dev/install.sh | sh
+```
 
-eval "$(KANSHI_CORE_ADDR=your-server:50051 make agent-env)"
+Start it. It grabs the ingest key `make up` generated and reports to your local core:
+
+```sh
+eval "$(make agent-env)"
 kanshi-agent
 ```
 
-For systemd Linux:
-
-```sh
-curl -fsSL https://kanshi.dev/install.sh |
-  sudo KANSHI_VERSION=v1.0.0 \
-  KANSHI_CORE_ADDR=your-server:50051 \
-  KANSHI_API_KEY=the-ingest-key-from-.env \
-  sh -s -- --systemd
-```
+Your machine appears on the dashboard within a few seconds. To run it as a background service or install on a remote host, see the [installation guide](https://kanshi.dev/docs/installation/).
 
 ## Try alerting
 

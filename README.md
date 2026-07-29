@@ -16,7 +16,7 @@ cd demo
 make up
 ```
 
-`make up` generates a private `.env`, pulls Kanshi `v1.2.0`, builds the sample services and Agent image, starts the stack, and prints the dashboard key. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
+`make up` generates a private `.env`, pulls the stable Kanshi v1.2 release line, builds the sample services and Agent image, starts the stack, and prints the dashboard key. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 

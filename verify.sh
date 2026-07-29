@@ -24,8 +24,9 @@ wait_for() {
 wait_for_http() {
   label=$1
   url=$2
+  expected_status=$3
   attempts=0
-  until curl -sS -o /dev/null "$url"; do
+  until [ "$(curl -sS -o /dev/null -w '%{http_code}' "$url")" = "$expected_status" ]; do
     attempts=$((attempts + 1))
     if [ "$attempts" -ge 30 ]; then
       echo "Timed out waiting for $label" >&2
@@ -48,7 +49,7 @@ latest_checkout_trace() {
 echo "verified: authentication and query limits"
 
 previous_trace_id=$(latest_checkout_trace)
-wait_for_http "checkout request" http://localhost:8081/checkout
+wait_for_http "successful checkout request" "http://localhost:8081/checkout?scenario=success" 200
 wait_for "checkout service" "$base/services" '"serviceName":"checkout"'
 wait_for "payments service" "$base/services" '"serviceName":"payments"'
 
@@ -66,7 +67,12 @@ done
 [ "${#trace_id}" = 32 ]
 wait_for "two-service trace" "$base/traces/$trace_id" '"serviceName":"payments"'
 wait_for "correlated checkout log" "$base/logs?traceId=$trace_id" '"body":"checkout completed"'
-wait_for "correlated payment log" "$base/logs?traceId=$trace_id" '"body":"payment declined"'
+wait_for "correlated payment log" "$base/logs?traceId=$trace_id" '"body":"payment approved"'
+
+[ "$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8081/checkout?scenario=declined")" = 402 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8081/checkout?scenario=error")" = 503 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' "http://localhost:8081/checkout?scenario=unknown")" = 400 ]
+echo "verified: varied API outcomes"
 
 wait_for "reporting agent" "$base/agents" '"agentId":"'
 agents=$(curl -fsS -H "$auth" "$base/agents")
@@ -76,6 +82,6 @@ wait_for "memory metrics" "$base/metrics/aggregate?agentId=$agent_id&name=mem.us
 
 docker compose stop -t 10 checkout payments >/dev/null
 docker compose up -d checkout payments >/dev/null
-wait_for_http "graceful service restart" http://localhost:8081/checkout
+wait_for_http "graceful service restart" "http://localhost:8081/checkout?scenario=success" 200
 
 echo "Application observability demo verified."

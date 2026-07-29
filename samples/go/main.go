@@ -56,7 +56,12 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/checkout", func(w http.ResponseWriter, r *http.Request) {
-		response, err := client.Get(os.Getenv("PAYMENTS_URL"))
+		request, err := http.NewRequestWithContext(r.Context(), http.MethodGet, os.Getenv("PAYMENTS_URL"), nil)
+		if err != nil {
+			http.Error(w, "invalid payment request", http.StatusInternalServerError)
+			return
+		}
+		response, err := client.Do(request)
 		if err != nil {
 			http.Error(w, "payment unavailable", http.StatusBadGateway)
 			return

@@ -74,7 +74,7 @@ agent_id=$(printf '%s' "$agents" | sed -n 's/.*"agentId":"\([^"]*\)".*/\1/p' | h
 wait_for "CPU metrics" "$base/metrics/aggregate?agentId=$agent_id&name=cpu.used_percent&interval=30s" '"avgValue":'
 wait_for "memory metrics" "$base/metrics/aggregate?agentId=$agent_id&name=mem.used_percent&interval=30s" '"avgValue":'
 
-docker compose kill -s SIGTERM checkout payments >/dev/null
+docker compose stop -t 10 checkout payments >/dev/null
 docker compose up -d checkout payments >/dev/null
 wait_for_http "graceful service restart" http://localhost:8081/checkout
 

@@ -39,7 +39,7 @@ verify: .env
 
 demo-alert: .env
 	@printf 'The Python demo process manages the memory alert automatically.\n\n'
-	@docker compose logs --tail=20 alert-sink
+	@docker compose logs --tail=20 demo-driver
 
 alert-logs:
-	docker compose logs -f alert-sink
+	docker compose logs -f demo-driver

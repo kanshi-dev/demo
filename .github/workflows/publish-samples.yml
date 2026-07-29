@@ -22,6 +22,8 @@ jobs:
             context: samples/go
           - image: demo-payments
             context: samples/node
+          - image: demo-driver
+            context: samples/driver
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3

@@ -1,0 +1,16 @@
+FROM alpine:3.23 AS download
+ARG AGENT_VERSION
+ARG TARGETOS
+ARG TARGETARCH
+RUN apk add --no-cache ca-certificates curl \
+    && base="https://github.com/kanshi-dev/agent/releases/download/v${AGENT_VERSION}" \
+    && archive="kanshi-agent_${AGENT_VERSION}_${TARGETOS}_${TARGETARCH}.tar.gz" \
+    && curl -fsSLO "${base}/${archive}" \
+    && curl -fsSLO "${base}/checksums.txt" \
+    && grep " ${archive}$" checksums.txt | sha256sum -c - \
+    && tar -xzf "${archive}"
+
+FROM scratch
+COPY --from=download /kanshi-agent /kanshi-agent
+WORKDIR /var/lib/kanshi-agent
+ENTRYPOINT ["/kanshi-agent"]

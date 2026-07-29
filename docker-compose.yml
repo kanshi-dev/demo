@@ -52,6 +52,24 @@ services:
       - "127.0.0.1:4317:4317"
       - "127.0.0.1:4318:4318"
 
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+      args:
+        AGENT_VERSION: ${AGENT_VERSION}
+    restart: unless-stopped
+    depends_on:
+      core:
+        condition: service_healthy
+    environment:
+      KANSHI_CORE_ADDR: core:50051
+      KANSHI_API_KEY: ${KANSHI_API_KEY}
+      KANSHI_INTERVAL: 2s
+      KANSHI_FLUSH_EVERY: 5s
+    volumes:
+      - kanshi_agent:/var/lib/kanshi-agent
+
   checkout:
     build: ./samples/go
     restart: unless-stopped
@@ -90,4 +108,5 @@ services:
       - ./alert-sink.py:/sink.py:ro
 
 volumes:
+  kanshi_agent:
   kanshi_db:

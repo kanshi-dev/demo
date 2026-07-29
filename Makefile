@@ -1,4 +1,4 @@
-.PHONY: up down reset keys agent-env logs demo-alert alert-logs
+.PHONY: up down reset keys agent-env logs verify demo-alert alert-logs
 
 .env: .env.example
 	@set -e; \
@@ -33,6 +33,9 @@ agent-env: .env
 
 logs:
 	docker compose logs -f
+
+verify: .env
+	./verify.sh
 
 demo-alert: .env
 	@key=$$(sed -n 's/^KANSHI_DASHBOARD_KEY=//p' .env); \

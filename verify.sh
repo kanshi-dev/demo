@@ -79,6 +79,9 @@ agents=$(curl -fsS -H "$auth" "$base/agents")
 agent_id=$(printf '%s' "$agents" | sed -n 's/.*"agentId":"\([^"]*\)".*/\1/p' | head -1)
 wait_for "CPU metrics" "$base/metrics/aggregate?agentId=$agent_id&name=cpu.used_percent&interval=30s" '"avgValue":'
 wait_for "memory metrics" "$base/metrics/aggregate?agentId=$agent_id&name=mem.used_percent&interval=30s" '"avgValue":'
+wait_for "automatic alert rule" "$base/alerts/rules" '"name":"Demo high memory"'
+wait_for "automatic alert firing" "$base/alerts/events?limit=100" '"ruleName":"Demo high memory"'
+wait_for "delivered alert webhook" "$base/alerts/events?limit=100" '"webhookStatus":"delivered"'
 
 docker compose stop -t 10 checkout payments >/dev/null
 docker compose up -d checkout payments >/dev/null

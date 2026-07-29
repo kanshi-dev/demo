@@ -45,7 +45,7 @@ wait_for "checkout service" "$base/services" '"serviceName":"checkout"'
 wait_for "payments service" "$base/services" '"serviceName":"payments"'
 
 traces=$(curl -fsS -H "$auth" "$base/traces?service=checkout")
-trace_id=$(printf '%s' "$traces" | sed -n 's/.*"traceId":"\([0-9a-f]*\)".*/\1/p' | head -1)
+trace_id=$(printf '%s' "$traces" | grep -o '"traceId":"[0-9a-f]*"' | head -1 | cut -d'"' -f4)
 [ "${#trace_id}" = 32 ]
 wait_for "two-service trace" "$base/traces/$trace_id" '"serviceName":"payments"'
 wait_for "correlated checkout log" "$base/logs?traceId=$trace_id" '"body":"checkout completed"'

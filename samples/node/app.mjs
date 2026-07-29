@@ -1,7 +1,7 @@
 import http from "node:http";
 import process from "node:process";
 
-import { context, propagation, SpanStatusCode, trace } from "@opentelemetry/api";
+import { context, propagation, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
@@ -28,7 +28,7 @@ const server = http.createServer((request, response) => {
   const parent = propagation.extract(context.active(), request.headers);
   tracer.startActiveSpan(
     `${request.method} ${request.url}`,
-    {},
+    { kind: SpanKind.SERVER },
     parent,
     (span) => {
       span.setStatus({ code: SpanStatusCode.ERROR, message: "card declined" });

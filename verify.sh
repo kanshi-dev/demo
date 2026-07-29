@@ -36,16 +36,33 @@ wait_for_http() {
   echo "verified: $label"
 }
 
+latest_checkout_trace() {
+  curl -fsS -H "$auth" "$base/traces?service=checkout" |
+    grep -o '"traceId":"[0-9a-f]*"' |
+    head -1 |
+    cut -d'"' -f4 || true
+}
+
 [ "$(curl -sS -o /dev/null -w '%{http_code}' "$base/services")" = 401 ]
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$auth" "$base/traces?limit=501")" = 400 ]
 echo "verified: authentication and query limits"
 
+previous_trace_id=$(latest_checkout_trace)
 wait_for_http "checkout request" http://localhost:8081/checkout
 wait_for "checkout service" "$base/services" '"serviceName":"checkout"'
 wait_for "payments service" "$base/services" '"serviceName":"payments"'
 
-traces=$(curl -fsS -H "$auth" "$base/traces?service=checkout")
-trace_id=$(printf '%s' "$traces" | grep -o '"traceId":"[0-9a-f]*"' | head -1 | cut -d'"' -f4)
+attempts=0
+trace_id=$(latest_checkout_trace)
+while [ -z "$trace_id" ] || [ "$trace_id" = "$previous_trace_id" ]; do
+  attempts=$((attempts + 1))
+  if [ "$attempts" -ge 30 ]; then
+    echo "Timed out waiting for a new checkout trace" >&2
+    exit 1
+  fi
+  sleep 2
+  trace_id=$(latest_checkout_trace)
+done
 [ "${#trace_id}" = 32 ]
 wait_for "two-service trace" "$base/traces/$trace_id" '"serviceName":"payments"'
 wait_for "correlated checkout log" "$base/logs?traceId=$trace_id" '"body":"checkout completed"'

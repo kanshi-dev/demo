@@ -71,7 +71,7 @@ services:
       - kanshi_agent:/var/lib/kanshi-agent
 
   checkout:
-    image: ghcr.io/kanshi-dev/demo-checkout@sha256:bb254db5694a8d9654ee0a612b9beeba7971a1214d0923a4a4cfc2be6b041df9
+    image: ghcr.io/kanshi-dev/demo-checkout:1.2.0
     restart: unless-stopped
     depends_on:
       collector:
@@ -85,7 +85,7 @@ services:
       - "127.0.0.1:8081:8081"
 
   payments:
-    image: ghcr.io/kanshi-dev/demo-payments@sha256:a0d3744e59e7bc255a7d8dae9e5be4206f30c84bb20c314bc5c41d347935b966
+    image: ghcr.io/kanshi-dev/demo-payments:1.2.0
     restart: unless-stopped
     depends_on:
       - collector

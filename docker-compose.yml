@@ -29,7 +29,7 @@ services:
       KANSHI_DASHBOARD_KEY: ${KANSHI_DASHBOARD_KEY}
       KANSHI_ALLOWED_ORIGINS: ${KANSHI_ALLOWED_ORIGINS}
       KANSHI_ALERT_INTERVAL: "10s"
-      KANSHI_WEBHOOK_URLS: http://alert-sink:9000
+      KANSHI_WEBHOOK_URLS: http://demo-driver:9000
       KANSHI_WEBHOOK_SECRET: ${KANSHI_WEBHOOK_SECRET}
       KANSHI_TRACE_RETENTION: ${KANSHI_TRACE_RETENTION}
       KANSHI_LOG_RETENTION: ${KANSHI_LOG_RETENTION}
@@ -110,8 +110,9 @@ services:
     ports:
       - "3000:80"
 
-  alert-sink:
-    image: python:3-alpine
+  demo-driver:
+    image: ghcr.io/kanshi-dev/demo-driver:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       core:
@@ -121,9 +122,6 @@ services:
     environment:
       KANSHI_DASHBOARD_KEY: ${KANSHI_DASHBOARD_KEY}
       DEMO_INTERVAL_SECONDS: ${DEMO_INTERVAL_SECONDS:-30}
-    command: ["python", "/demo.py"]
-    volumes:
-      - ./demo.py:/demo.py:ro
 
 volumes:
   kanshi_agent:

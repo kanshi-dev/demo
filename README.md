@@ -1,11 +1,12 @@
 # Kanshi demo
 
-Run Kanshi locally from the current stable release. This repository is the fastest self-contained path for testing the dashboard, core, TimescaleDB, and an agent without creating AWS resources.
+Run Kanshi locally from the current stable release. This repository is the fastest self-contained path for testing the dashboard, Core, TimescaleDB, Agent, OpenTelemetry Collector, and instrumented services without creating AWS resources.
 
 ## Requirements
 
 - Docker with Compose
 - OpenSSL
+- curl
 
 ## Start the stack
 
@@ -15,26 +16,29 @@ cd demo
 make up
 ```
 
-`make up` generates a private `.env`, pulls Core and Dashboard `v1.1.0`, starts the stack, and prints the dashboard key. Core initializes the schema and 30-day retention policy.
+`make up` generates a private `.env`, pulls Kanshi `v1.2.0`, builds the sample services and Agent image, starts the stack, and prints the dashboard key. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
-## Install an agent
+## Try application observability
 
-Install the agent on your machine:
-
-```sh
-curl -fsSL https://kanshi.dev/install.sh | sh
-```
-
-Start it. It grabs the ingest key `make up` generated and reports to your local core:
+The Go checkout service and Node.js payment service include the official OpenTelemetry SDKs. They send OTLP traces and correlated logs to the bundled Collector, which authenticates to Core. No local OpenTelemetry installation is required.
 
 ```sh
-eval "$(make agent-env)"
-kanshi-agent
+curl http://localhost:8081/checkout
 ```
 
-Your machine appears on the dashboard within a few seconds. To run it as a background service or install on a remote host, see the [installation guide](https://kanshi.dev/docs/installation/).
+The payment service deliberately returns `503` so the trace has an error to investigate. Open the dashboard **Services** page to search the trace, inspect its span waterfall, and view logs linked to each span.
+
+The stack also runs Kanshi Agent. Its container host appears on the **Agents** page with live CPU and memory metrics.
+
+Run the repeatable end-to-end check:
+
+```sh
+make verify
+```
+
+It verifies rejected unauthenticated requests, query limits, the two-service trace, correlated logs, Agent CPU and memory, and graceful sample service shutdown and restart.
 
 ## Try alerting
 
@@ -45,14 +49,6 @@ make demo-alert
 ```
 
 This checks for a reporting agent and its memory metrics, creates an enabled `mem.used_percent > 1` rule that live data breaches, and prints the signed webhook Core delivers, including its `X-Kanshi-Signature`. If no agent is reporting yet, it says so instead of fabricating data. Manage rules and watch active alerts and history on the dashboard **Alerts** page, and stream deliveries with `make alert-logs`.
-
-## Verify
-
-```sh
-curl http://localhost:8080/health
-curl -H "Authorization: Bearer $dashboard_key" \
-  http://localhost:8080/api/v1/agents
-```
 
 ## Screens
 
@@ -70,6 +66,12 @@ curl -H "Authorization: Bearer $dashboard_key" \
 make down
 ```
 
-Run `make reset` when you also want to delete local metrics and regenerate keys on the next start.
+Run `make reset` when you also want to delete local telemetry, the Agent identity, and generated keys. A clean-machine repeat is:
+
+```sh
+make reset
+make up
+make verify
+```
 
 For the AWS test environment, use the [Terraform demo](https://github.com/kanshi-dev/infra). For component details, see the [Kanshi documentation](https://kanshi.dev/docs/).

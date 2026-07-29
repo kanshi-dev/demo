@@ -16,7 +16,7 @@ cd demo
 make up
 ```
 
-`make up` generates a private `.env`, pulls the stable Kanshi v1.2 release line and prebuilt sample services, builds the Agent image, starts the stack, and prints the dashboard key. A small Alpine demo driver creates the memory alert rule when missing and generates mixed checkout traffic every 30 seconds. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
+`make up` generates a private `.env`, pulls the stable Kanshi v1.2 release line and prebuilt sample services, builds the Agent image, starts the stack, and prints the dashboard key. One Python Alpine container receives alert webhooks, creates the memory alert rule when missing, and generates mixed checkout traffic every 30 seconds. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
@@ -45,7 +45,7 @@ It verifies rejected unauthenticated requests, query limits, successful and fail
 
 ## Try alerting
 
-The demo driver creates an enabled `mem.used_percent > 1` rule. Once the Agent reports real data, Core fires the alert and delivers a signed webhook to the bundled private sink. View the rule, active alert, history, and delivery status on the dashboard **Alerts** page.
+The Python demo process creates an enabled `mem.used_percent > 1` rule. Once the Agent reports real data, Core fires the alert and delivers a signed webhook to the same private container. View the rule, active alert, history, and delivery status on the dashboard **Alerts** page.
 
 Print the delivered webhook:
 

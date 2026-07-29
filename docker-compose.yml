@@ -71,7 +71,8 @@ services:
       - kanshi_agent:/var/lib/kanshi-agent
 
   checkout:
-    image: ghcr.io/kanshi-dev/demo-checkout:1.2.0
+    image: ghcr.io/kanshi-dev/demo-checkout:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       collector:
@@ -85,7 +86,8 @@ services:
       - "127.0.0.1:8081:8081"
 
   payments:
-    image: ghcr.io/kanshi-dev/demo-payments:1.2.0
+    image: ghcr.io/kanshi-dev/demo-payments:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       - collector
@@ -99,23 +101,6 @@ services:
       timeout: 2s
       retries: 15
 
-  demo-driver:
-    image: alpine:3.23
-    restart: unless-stopped
-    depends_on:
-      core:
-        condition: service_healthy
-      checkout:
-        condition: service_started
-      alert-sink:
-        condition: service_started
-    environment:
-      KANSHI_DASHBOARD_KEY: ${KANSHI_DASHBOARD_KEY}
-      DEMO_INTERVAL_SECONDS: ${DEMO_INTERVAL_SECONDS:-30}
-    command: ["/demo-driver.sh"]
-    volumes:
-      - ./demo-driver.sh:/demo-driver.sh:ro
-
   dashboard:
     image: ghcr.io/kanshi-dev/dashboard:${DASHBOARD_VERSION}
     restart: unless-stopped
@@ -128,9 +113,17 @@ services:
   alert-sink:
     image: python:3-alpine
     restart: unless-stopped
-    command: ["python", "/sink.py"]
+    depends_on:
+      core:
+        condition: service_healthy
+      checkout:
+        condition: service_started
+    environment:
+      KANSHI_DASHBOARD_KEY: ${KANSHI_DASHBOARD_KEY}
+      DEMO_INTERVAL_SECONDS: ${DEMO_INTERVAL_SECONDS:-30}
+    command: ["python", "/demo.py"]
     volumes:
-      - ./alert-sink.py:/sink.py:ro
+      - ./demo.py:/demo.py:ro
 
 volumes:
   kanshi_agent:

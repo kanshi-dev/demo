@@ -71,7 +71,8 @@ services:
       - kanshi_agent:/var/lib/kanshi-agent
 
   checkout:
-    image: ghcr.io/kanshi-dev/demo-checkout:1.2.0
+    image: ghcr.io/kanshi-dev/demo-checkout:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       collector:
@@ -85,7 +86,8 @@ services:
       - "127.0.0.1:8081:8081"
 
   payments:
-    image: ghcr.io/kanshi-dev/demo-payments:1.2.0
+    image: ghcr.io/kanshi-dev/demo-payments:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       - collector

@@ -1,0 +1,41 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    send_batch_size: 512
+    timeout: 1s
+    send_batch_max_size: 1000
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 128
+
+exporters:
+  otlp/kanshi:
+    endpoint: core:50051
+    tls:
+      insecure: true
+    headers:
+      x-api-key: ${env:KANSHI_API_KEY}
+    sending_queue:
+      enabled: true
+      queue_size: 1000
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 30s
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/kanshi]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/kanshi]

@@ -31,9 +31,73 @@ services:
       KANSHI_ALERT_INTERVAL: "10s"
       KANSHI_WEBHOOK_URLS: http://alert-sink:9000
       KANSHI_WEBHOOK_SECRET: ${KANSHI_WEBHOOK_SECRET}
+      KANSHI_TRACE_RETENTION: ${KANSHI_TRACE_RETENTION}
+      KANSHI_LOG_RETENTION: ${KANSHI_LOG_RETENTION}
     ports:
       - "8080:8080"
       - "50051:50051"
+
+  collector:
+    image: otel/opentelemetry-collector:0.157.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    depends_on:
+      core:
+        condition: service_healthy
+    environment:
+      KANSHI_API_KEY: ${KANSHI_API_KEY}
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+      args:
+        AGENT_VERSION: ${AGENT_VERSION}
+    restart: unless-stopped
+    depends_on:
+      core:
+        condition: service_healthy
+    environment:
+      KANSHI_CORE_ADDR: core:50051
+      KANSHI_API_KEY: ${KANSHI_API_KEY}
+      KANSHI_INTERVAL: 2s
+      KANSHI_FLUSH_EVERY: 5s
+    volumes:
+      - kanshi_agent:/var/lib/kanshi-agent
+
+  checkout:
+    build: ./samples/go
+    restart: unless-stopped
+    depends_on:
+      collector:
+        condition: service_started
+      payments:
+        condition: service_healthy
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4317
+      PAYMENTS_URL: http://payments:8082/charge
+    ports:
+      - "127.0.0.1:8081:8081"
+
+  payments:
+    build: ./samples/node
+    restart: unless-stopped
+    depends_on:
+      - collector
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4317
+    ports:
+      - "127.0.0.1:8082:8082"
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('node:net').connect(8082,'127.0.0.1');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
 
   dashboard:
     image: ghcr.io/kanshi-dev/dashboard:${DASHBOARD_VERSION}
@@ -52,4 +116,5 @@ services:
       - ./alert-sink.py:/sink.py:ro
 
 volumes:
+  kanshi_agent:
   kanshi_db:

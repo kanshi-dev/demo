@@ -26,9 +26,12 @@ The Go checkout service and Node.js payment service include the official OpenTel
 
 ```sh
 curl http://localhost:8081/checkout
+curl "http://localhost:8081/checkout?scenario=slow"
+curl "http://localhost:8081/checkout?scenario=declined"
+curl "http://localhost:8081/checkout?scenario=error"
 ```
 
-The payment service deliberately returns `503` so the trace has an error to investigate. Open the dashboard **Services** page to search the trace, inspect its span waterfall, and view logs linked to each span.
+Requests without a scenario cycle through successful, slow, declined, and unavailable payments. Explicit scenarios return `200`, `402`, or `503`, while an unknown scenario returns `400`. Open the dashboard **Services** page to compare healthy and failed traces, inspect their latency and span waterfalls, and view logs linked to each span.
 
 The stack also runs Kanshi Agent. Its container host appears on the **Agents** page with live CPU and memory metrics.
 
@@ -38,7 +41,7 @@ Run the repeatable end-to-end check:
 make verify
 ```
 
-It verifies rejected unauthenticated requests, query limits, the two-service trace, correlated logs, Agent CPU and memory, and graceful sample service shutdown and restart.
+It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, a two-service trace, correlated logs, Agent CPU and memory, and graceful sample service shutdown and restart.
 
 ## Try alerting
 

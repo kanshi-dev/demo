@@ -24,22 +24,49 @@ const loggerProvider = new LoggerProvider({
 
 const tracer = trace.getTracer("payments");
 const logger = loggerProvider.getLogger("payments");
+const outcomes = {
+  success: { status: 200, delay: 40, severity: SeverityNumber.INFO, body: "payment approved" },
+  slow: { status: 200, delay: 750, severity: SeverityNumber.INFO, body: "payment approved after review" },
+  declined: { status: 402, delay: 80, severity: SeverityNumber.WARN, body: "payment declined" },
+  error: { status: 503, delay: 120, severity: SeverityNumber.ERROR, body: "payment provider unavailable" },
+};
+const defaultScenarios = ["success", "success", "slow", "declined", "success", "error"];
+let requestCount = 0;
+
+function outcomeFor(request) {
+  const scenario = new URL(request.url, "http://payments").searchParams.get("scenario");
+  if (!scenario) {
+    return outcomes[defaultScenarios[requestCount++ % defaultScenarios.length]];
+  }
+  return (
+    outcomes[scenario] ?? {
+      status: 400,
+      delay: 0,
+      severity: SeverityNumber.WARN,
+      body: "unknown payment scenario",
+    }
+  );
+}
+
 const server = http.createServer((request, response) => {
   const parent = propagation.extract(context.active(), request.headers);
+  const outcome = outcomeFor(request);
   tracer.startActiveSpan(
     `${request.method} ${request.url}`,
     { kind: SpanKind.SERVER },
     parent,
-    (span) => {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: "card declined" });
+    async (span) => {
+      await new Promise((resolve) => setTimeout(resolve, outcome.delay));
+      if (outcome.status >= 400) {
+        span.setStatus({ code: SpanStatusCode.ERROR, message: outcome.body });
+      }
       logger.emit({
-        severityNumber: SeverityNumber.ERROR,
-        severityText: "ERROR",
-        body: "payment declined",
-        attributes: { "payment.reason": "demo_card_declined" },
+        severityNumber: outcome.severity,
+        body: outcome.body,
+        attributes: { "http.response.status_code": outcome.status },
       });
-      response.writeHead(503, { "content-type": "text/plain" });
-      response.end("payment declined\n");
+      response.writeHead(outcome.status, { "content-type": "text/plain" });
+      response.end(`${outcome.body}\n`);
       span.end();
     },
   );

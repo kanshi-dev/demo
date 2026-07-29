@@ -19,7 +19,7 @@ traceProvider.register();
 
 const loggerProvider = new LoggerProvider({
   resource,
-  processors: [new BatchLogRecordProcessor(new OTLPLogExporter())],
+  processors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() })],
 });
 
 const tracer = trace.getTracer("payments");

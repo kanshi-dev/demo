@@ -21,11 +21,26 @@ wait_for() {
   echo "verified: $label"
 }
 
+wait_for_http() {
+  label=$1
+  url=$2
+  attempts=0
+  until curl -sS -o /dev/null "$url"; do
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge 30 ]; then
+      echo "Timed out waiting for $label" >&2
+      exit 1
+    fi
+    sleep 2
+  done
+  echo "verified: $label"
+}
+
 [ "$(curl -sS -o /dev/null -w '%{http_code}' "$base/services")" = 401 ]
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$auth" "$base/traces?limit=501")" = 400 ]
 echo "verified: authentication and query limits"
 
-curl -fsS http://localhost:8081/checkout >/dev/null || true
+wait_for_http "checkout request" http://localhost:8081/checkout
 wait_for "checkout service" "$base/services" '"serviceName":"checkout"'
 wait_for "payments service" "$base/services" '"serviceName":"payments"'
 
@@ -44,6 +59,6 @@ wait_for "memory metrics" "$base/metrics/aggregate?agentId=$agent_id&name=mem.us
 
 docker compose kill -s SIGTERM checkout payments >/dev/null
 docker compose up -d checkout payments >/dev/null
-wait_for "graceful service restart" "$base/services" '"serviceName":"checkout"'
+wait_for_http "graceful service restart" http://localhost:8081/checkout
 
 echo "Application observability demo verified."

@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	otellog "go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/global"
+	"go.opentelemetry.io/otel/propagation"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -48,6 +49,7 @@ func main() {
 		sdklog.WithResource(res),
 	)
 	otel.SetTracerProvider(traces)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 	global.SetLoggerProvider(logs)
 
 	client := &http.Client{

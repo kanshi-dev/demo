@@ -2,7 +2,7 @@ import http from "node:http";
 import process from "node:process";
 
 import { context, propagation, SpanStatusCode, trace } from "@opentelemetry/api";
-import { logs, SeverityNumber } from "@opentelemetry/api-logs";
+import { SeverityNumber } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { resourceFromAttributes } from "@opentelemetry/resources";
@@ -21,10 +21,9 @@ const loggerProvider = new LoggerProvider({
   resource,
   processors: [new BatchLogRecordProcessor(new OTLPLogExporter())],
 });
-logs.setGlobalLoggerProvider(loggerProvider);
 
 const tracer = trace.getTracer("payments");
-const logger = logs.getLogger("payments");
+const logger = loggerProvider.getLogger("payments");
 const server = http.createServer((request, response) => {
   const parent = propagation.extract(context.active(), request.headers);
   tracer.startActiveSpan(

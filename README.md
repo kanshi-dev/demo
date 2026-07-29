@@ -16,7 +16,7 @@ cd demo
 make up
 ```
 
-`make up` generates a private `.env`, pulls the stable Kanshi v1.2 release line, builds the sample services and Agent image, starts the stack, and prints the dashboard key. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
+`make up` generates a private `.env`, pulls the stable Kanshi v1.2 release line, builds the sample services and Agent image, starts the stack, and prints the dashboard key. A small Alpine demo driver creates the memory alert rule when missing and generates mixed checkout traffic every 30 seconds. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
@@ -45,13 +45,15 @@ It verifies rejected unauthenticated requests, query limits, successful and fail
 
 ## Try alerting
 
-The stack ships a bundled webhook sink and configures Core to deliver signed alert webhooks to it. Once an agent is reporting (see above), fire a sample alert on real data:
+The demo driver creates an enabled `mem.used_percent > 1` rule. Once the Agent reports real data, Core fires the alert and delivers a signed webhook to the bundled private sink. View the rule, active alert, history, and delivery status on the dashboard **Alerts** page.
+
+Print the delivered webhook:
 
 ```sh
 make demo-alert
 ```
 
-This checks for a reporting agent and its memory metrics, creates an enabled `mem.used_percent > 1` rule that live data breaches, and prints the signed webhook Core delivers, including its `X-Kanshi-Signature`. If no agent is reporting yet, it says so instead of fabricating data. Manage rules and watch active alerts and history on the dashboard **Alerts** page, and stream deliveries with `make alert-logs`.
+`make demo-alert` reads the sink log without creating another rule. Stream future deliveries with `make alert-logs`.
 
 ## Screens
 

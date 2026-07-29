@@ -63,6 +63,16 @@ services:
     ports:
       - "127.0.0.1:8081:8081"
 
+  payments:
+    build: ./samples/node
+    restart: unless-stopped
+    depends_on:
+      - collector
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4317
+    ports:
+      - "127.0.0.1:8082:8082"
+
   dashboard:
     image: ghcr.io/kanshi-dev/dashboard:${DASHBOARD_VERSION}
     restart: unless-stopped

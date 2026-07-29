@@ -12,6 +12,9 @@ Thumbs.db
 # Docker
 *.log
 
+# Node.js
+node_modules/
+
 # Database
 *.sql.backup
 .env

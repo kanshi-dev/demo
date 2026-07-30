@@ -2,6 +2,8 @@
 
 Run Kanshi locally from the current stable release. This repository is the fastest self-contained path for testing the dashboard, Core, TimescaleDB, Agent, OpenTelemetry Collector, and instrumented services without creating AWS resources.
 
+![Kanshi system architecture](imgs/system-architecture.svg)
+
 ## Requirements
 
 - Docker with Compose
@@ -16,13 +18,15 @@ cd demo
 make up
 ```
 
-`make up` generates a private `.env`, pulls the stable Kanshi v1.2 release line and the latest prebuilt demo images, builds the Agent image, starts the stack, and prints the dashboard key. The Demo Driver image receives alert webhooks, creates the memory alert rule when missing, and generates mixed checkout traffic every 30 seconds. Core initializes the schema with 30-day host metric retention, 7-day trace retention, and 3-day log retention.
+`make up` generates private keys, pulls the published images, builds the Agent container, starts the stack, and prints the dashboard key. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
+![Kanshi fleet overview](imgs/agents.png)
+
 ## Try application observability
 
-The Go checkout service and Node.js payment service include the official OpenTelemetry SDKs. They send OTLP traces and correlated logs to the bundled Collector, which authenticates to Core. No local OpenTelemetry installation is required.
+Checkout and Payments send OTLP traces and correlated logs through the bundled Collector. No local OpenTelemetry installation is required.
 
 ```sh
 curl http://localhost:8081/checkout
@@ -31,9 +35,13 @@ curl "http://localhost:8081/checkout?scenario=declined"
 curl "http://localhost:8081/checkout?scenario=error"
 ```
 
-Requests without a scenario cycle through successful, slow, declined, and unavailable payments. Explicit scenarios return `200`, `402`, or `503`, while an unknown scenario returns `400`. Open the dashboard **Services** page to compare healthy and failed traces, inspect their latency and span waterfalls, and view logs linked to each span.
+Requests cycle through successful, slow, declined, and unavailable payments. Open **Services** to compare outcomes and latency.
 
-The stack also runs Kanshi Agent. Its container host appears on the **Agents** page with live CPU and memory metrics.
+![Kanshi services and trace search](imgs/services.png)
+
+Open a trace to inspect its span waterfall and correlated logs.
+
+![Kanshi trace details and correlated logs](imgs/trace-details.png)
 
 Run the repeatable end-to-end check:
 
@@ -43,9 +51,15 @@ make verify
 
 It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, a two-service trace, correlated logs, Agent CPU and memory, and graceful sample service shutdown and restart.
 
+The containerized Agent also reports live CPU, memory, and disk metrics.
+
+![Kanshi agent details](imgs/agent-details.png)
+
 ## Try alerting
 
-The Python demo process creates an enabled `mem.used_percent > 1` rule. Once the Agent reports real data, Core fires the alert and delivers a signed webhook to the same private container. View the rule, active alert, history, and delivery status on the dashboard **Alerts** page.
+The Demo Driver creates a `mem.used_percent > 1` rule. Core fires it after the Agent reports and delivers the signed webhook back to the driver.
+
+![Kanshi alert rule, active alerts, and webhook history](imgs/alerts.png)
 
 Print the delivered webhook:
 
@@ -54,16 +68,6 @@ make demo-alert
 ```
 
 `make demo-alert` reads the sink log without creating another rule. Stream future deliveries with `make alert-logs`.
-
-## Screens
-
-### Fleet overview
-
-![Kanshi fleet overview](imgs/agents.png)
-
-### Agent details
-
-![Kanshi agent details](imgs/agent-details.png)
 
 ## Stop
 

@@ -1,6 +1,6 @@
 # Kanshi demo
 
-Run Kanshi locally from the current stable release. This repository is the fastest self-contained path for testing the dashboard, Core, TimescaleDB, Agent, OpenTelemetry Collector, and instrumented services without creating AWS resources.
+Run the next Kanshi release candidate in an isolated local stack. The `demo-rc` branch pins exact prerelease versions without changing the stable Demo on `main`.
 
 ![Kanshi system architecture](imgs/system-architecture.svg)
 
@@ -13,12 +13,12 @@ Run Kanshi locally from the current stable release. This repository is the faste
 ## Start the stack
 
 ```sh
-git clone https://github.com/kanshi-dev/demo.git
-cd demo
+git clone --branch demo-rc https://github.com/kanshi-dev/demo.git kanshi-demo-rc
+cd kanshi-demo-rc
 make up
 ```
 
-`make up` generates private keys, pulls the published images, builds the Agent container, starts the stack, and prints the dashboard key. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
+`make up` generates private keys, pulls the exact RC images, builds the exact RC Agent, starts the `kanshi-demo-rc` Compose project with separate volumes, and prints the dashboard key. Process telemetry is enabled only on this branch. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
@@ -49,7 +49,7 @@ Run the repeatable end-to-end check:
 make verify
 ```
 
-It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, a two-service trace, correlated logs, Agent CPU and memory, and graceful sample service shutdown and restart.
+It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, a two-service trace, correlated logs, Agent CPU, memory, process count, process CPU, process RSS, and graceful sample service shutdown and restart.
 
 The containerized Agent also reports live CPU, memory, and disk metrics.
 

@@ -72,6 +72,8 @@ services:
       KANSHI_API_KEY: ${KANSHI_API_KEY}
       KANSHI_INTERVAL: 2s
       KANSHI_FLUSH_EVERY: 5s
+      KANSHI_PROCESS_METRICS: "true"
+      KANSHI_PROCESS_TOP_N: "10"
     volumes:
       - kanshi_agent:/var/lib/kanshi-agent
 

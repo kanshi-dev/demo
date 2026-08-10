@@ -58,10 +58,11 @@ services:
       - "127.0.0.1:4318:4318"
 
   agent-identity:
-    image: busybox:1.37
+    image: timescale/timescaledb:latest-pg17
+    entrypoint: ["sh", "-c"]
     environment:
       DEMO_AGENT_ID: ${DEMO_AGENT_ID}
-    command: ["sh", "-c", "printf '%s' \"$$DEMO_AGENT_ID\" > /var/lib/kanshi-agent/.kanshi-id"]
+    command: ["printf '%s' \"$$DEMO_AGENT_ID\" > /var/lib/kanshi-agent/.kanshi-id"]
     volumes:
       - kanshi_agent:/var/lib/kanshi-agent
 

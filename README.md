@@ -18,11 +18,13 @@ cd demo
 make up
 ```
 
-`make up` generates private keys, pulls the published images, builds the Agent container, starts the stack, and prints the dashboard key. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
+`make up` generates private keys and a non-secret Agent ID, seeds the Agent identity volume, pulls the stable Core and Dashboard images, builds the stable Agent, starts the stack, and prints the dashboard key. The Demo enables process telemetry as an explicit opt-in example. Checkout and Payments report the same Agent ID and `host.name`, so services and trace spans link to the monitored host. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
 ![Kanshi fleet overview](imgs/agents.png)
+
+![Kanshi fleet overview in dark mode](imgs/agents-dark.png)
 
 ## Try application observability
 
@@ -39,9 +41,13 @@ Requests cycle through successful, slow, declined, and unavailable payments. Ope
 
 ![Kanshi services and trace search](imgs/services.png)
 
+![Kanshi services and trace search in dark mode](imgs/services-dark.png)
+
 Open a trace to inspect its span waterfall and correlated logs.
 
 ![Kanshi trace details and correlated logs](imgs/trace-details.png)
+
+![Kanshi trace details and correlated logs in dark mode](imgs/trace-details-dark.png)
 
 Run the repeatable end-to-end check:
 
@@ -49,11 +55,13 @@ Run the repeatable end-to-end check:
 make verify
 ```
 
-It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, a two-service trace, correlated logs, Agent CPU and memory, and graceful sample service shutdown and restart.
+It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, service and trace host links, Agent navigation identity, a two-service trace, correlated logs, Agent CPU, memory, network, process count, process CPU, process RSS, alerts, and graceful sample service shutdown and restart.
 
 The containerized Agent also reports live CPU, memory, and disk metrics.
 
 ![Kanshi agent details](imgs/agent-details.png)
+
+![Kanshi agent details in dark mode](imgs/agent-details-dark.png)
 
 ## Try alerting
 

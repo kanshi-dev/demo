@@ -1,3 +1,8 @@
+export COMPOSE_PROJECT_NAME := kanshi-demo
+export CORE_VERSION := 1.3.0
+export DASHBOARD_VERSION := 1.3.0
+export AGENT_VERSION := 1.3.0
+
 .PHONY: up down reset keys agent-env logs verify demo-alert alert-logs
 
 .env: .env.example
@@ -8,12 +13,15 @@
 	ingest_key=$$(openssl rand -hex 32); \
 	dashboard_key=$$(openssl rand -hex 32); \
 	webhook_secret=$$(openssl rand -hex 32); \
-	sed "s/generate-db-password/$$db_password/; s/generate-ingest-key/$$ingest_key/; s/generate-dashboard-key/$$dashboard_key/; s/generate-webhook-secret/$$webhook_secret/" .env > .env.tmp; \
+	agent_id=$$(openssl rand -hex 16); \
+	sed "s/generate-db-password/$$db_password/; s/generate-ingest-key/$$ingest_key/; s/generate-dashboard-key/$$dashboard_key/; s/generate-webhook-secret/$$webhook_secret/; s/generate-agent-id/$$agent_id/" .env > .env.tmp; \
 	mv .env.tmp .env
 	@echo "Generated .env" >&2
 
 up: .env
-	docker compose up -d
+	docker compose pull core dashboard
+	docker compose build agent
+	docker compose up -d --no-build
 	@$(MAKE) --no-print-directory keys
 
 down:

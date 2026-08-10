@@ -5,12 +5,14 @@ import { context, propagation, SpanKind, SpanStatusCode, trace } from "@opentele
 import { SeverityNumber } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
-import { resourceFromAttributes } from "@opentelemetry/resources";
+import { detectResources, envDetector, resourceFromAttributes } from "@opentelemetry/resources";
 import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
 import { BatchSpanProcessor, NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
-const resource = resourceFromAttributes({ [ATTR_SERVICE_NAME]: "payments" });
+const resource = detectResources({ detectors: [envDetector] }).merge(
+  resourceFromAttributes({ [ATTR_SERVICE_NAME]: "payments" }),
+);
 const traceProvider = new NodeTracerProvider({
   resource,
   spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter())],

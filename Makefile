@@ -1,7 +1,7 @@
-export COMPOSE_PROJECT_NAME := kanshi-demo-rc
-export CORE_VERSION := 1.3.0-rc.3
-export DASHBOARD_VERSION := 1.3.0-rc.4
-export AGENT_VERSION := 1.3.0-rc.3
+export COMPOSE_PROJECT_NAME := kanshi-demo
+export CORE_VERSION := 1.3.0
+export DASHBOARD_VERSION := 1.3.0
+export AGENT_VERSION := 1.3.0
 
 .PHONY: up down reset keys agent-env logs verify demo-alert alert-logs
 

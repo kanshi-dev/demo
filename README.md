@@ -1,6 +1,6 @@
 # Kanshi demo
 
-Run the next Kanshi release candidate in an isolated local stack. The `demo-rc` branch pins exact prerelease versions without changing the stable Demo on `main`.
+Run Kanshi locally from the current stable release. This repository is the fastest self-contained path for testing the dashboard, Core, TimescaleDB, Agent, OpenTelemetry Collector, and instrumented services without creating AWS resources.
 
 ![Kanshi system architecture](imgs/system-architecture.svg)
 
@@ -13,16 +13,18 @@ Run the next Kanshi release candidate in an isolated local stack. The `demo-rc` 
 ## Start the stack
 
 ```sh
-git clone --branch demo-rc https://github.com/kanshi-dev/demo.git kanshi-demo-rc
-cd kanshi-demo-rc
+git clone https://github.com/kanshi-dev/demo.git
+cd demo
 make up
 ```
 
-`make up` generates private keys and a non-secret Agent ID, seeds the Agent identity volume, pulls the exact RC images, builds the exact RC Agent, starts the `kanshi-demo-rc` Compose project with separate volumes, and prints the dashboard key. Process telemetry is enabled only on this branch. Checkout and Payments report the same Agent ID and `host.name`, so services and trace spans link to the monitored host. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
+`make up` generates private keys and a non-secret Agent ID, seeds the Agent identity volume, pulls the stable Core and Dashboard images, builds the stable Agent, starts the stack, and prints the dashboard key. The Demo enables process telemetry as an explicit opt-in example. Checkout and Payments report the same Agent ID and `host.name`, so services and trace spans link to the monitored host. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 
 ![Kanshi fleet overview](imgs/agents.png)
+
+![Kanshi fleet overview in dark mode](imgs/agents-dark.png)
 
 ## Try application observability
 
@@ -39,9 +41,13 @@ Requests cycle through successful, slow, declined, and unavailable payments. Ope
 
 ![Kanshi services and trace search](imgs/services.png)
 
+![Kanshi services and trace search in dark mode](imgs/services-dark.png)
+
 Open a trace to inspect its span waterfall and correlated logs.
 
 ![Kanshi trace details and correlated logs](imgs/trace-details.png)
+
+![Kanshi trace details and correlated logs in dark mode](imgs/trace-details-dark.png)
 
 Run the repeatable end-to-end check:
 
@@ -54,6 +60,8 @@ It verifies rejected unauthenticated requests, query limits, successful and fail
 The containerized Agent also reports live CPU, memory, and disk metrics.
 
 ![Kanshi agent details](imgs/agent-details.png)
+
+![Kanshi agent details in dark mode](imgs/agent-details-dark.png)
 
 ## Try alerting
 

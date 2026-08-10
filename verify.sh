@@ -81,8 +81,10 @@ wait_for "reporting agent" "$base/agents" '"agentId":"'
 agents=$(curl -fsS -H "$auth" "$base/agents")
 agent_id=$(printf '%s' "$agents" | sed -n 's/.*"agentId":"\([^"]*\)".*/\1/p' | head -1)
 [ "$agent_id" = "$demo_agent_id" ]
+agent_version=$(printf '%s' "$agents" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1)
+[ "$agent_version" = "$AGENT_VERSION" ]
 printf '%s' "$agents" | grep -q '"hostName":"kanshi-demo"'
-echo "verified: Agent navigation identity"
+echo "verified: Agent navigation identity and version"
 wait_for "CPU metrics" "$base/metrics/aggregate?agentId=$agent_id&name=cpu.used_percent&interval=30s" '"avgValue":'
 wait_for "memory metrics" "$base/metrics/aggregate?agentId=$agent_id&name=mem.used_percent&interval=30s" '"avgValue":'
 wait_for "network send metrics" "$base/metrics/aggregate?agentId=$agent_id&name=net.bytes_sent_per_second&interval=30s" '"avgValue":'

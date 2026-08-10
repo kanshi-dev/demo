@@ -19,7 +19,9 @@ export AGENT_VERSION := 1.3.0-rc.3
 	@echo "Generated .env" >&2
 
 up: .env
-	docker compose up -d
+	docker compose pull core dashboard
+	docker compose build agent
+	docker compose up -d --no-build
 	@$(MAKE) --no-print-directory keys
 
 down:

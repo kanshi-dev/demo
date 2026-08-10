@@ -18,7 +18,7 @@ cd kanshi-demo-rc
 make up
 ```
 
-`make up` generates private keys, pulls the exact RC images, builds the exact RC Agent, starts the `kanshi-demo-rc` Compose project with separate volumes, and prints the dashboard key. Process telemetry is enabled only on this branch. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
+`make up` generates private keys and a non-secret Agent ID, seeds the Agent identity volume, pulls the exact RC images, builds the exact RC Agent, starts the `kanshi-demo-rc` Compose project with separate volumes, and prints the dashboard key. Process telemetry is enabled only on this branch. Checkout and Payments report the same Agent ID and `host.name`, so services and trace spans link to the monitored host. The Demo Driver generates mixed checkout traffic, creates the memory alert rule, and receives its webhooks.
 
 Open [http://localhost:3000](http://localhost:3000) and enter the printed dashboard key. Run `make keys` to print it again.
 

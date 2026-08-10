@@ -57,6 +57,14 @@ services:
       - "127.0.0.1:4317:4317"
       - "127.0.0.1:4318:4318"
 
+  agent-identity:
+    image: busybox:1.37
+    environment:
+      DEMO_AGENT_ID: ${DEMO_AGENT_ID}
+    command: ["sh", "-c", "printf '%s' \"$$DEMO_AGENT_ID\" > /var/lib/kanshi-agent/.kanshi-id"]
+    volumes:
+      - kanshi_agent:/var/lib/kanshi-agent
+
   agent:
     build:
       context: .
@@ -67,6 +75,9 @@ services:
     depends_on:
       core:
         condition: service_healthy
+      agent-identity:
+        condition: service_completed_successfully
+    hostname: kanshi-demo
     environment:
       KANSHI_CORE_ADDR: core:50051
       KANSHI_API_KEY: ${KANSHI_API_KEY}
@@ -88,6 +99,7 @@ services:
         condition: service_healthy
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: kanshi.agent.id=${DEMO_AGENT_ID},host.name=kanshi-demo
       PAYMENTS_URL: http://payments:8082/charge
     ports:
       - "127.0.0.1:8081:8081"
@@ -100,6 +112,7 @@ services:
       - collector
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: kanshi.agent.id=${DEMO_AGENT_ID},host.name=kanshi-demo
     ports:
       - "127.0.0.1:8082:8082"
     healthcheck:

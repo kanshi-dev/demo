@@ -49,7 +49,7 @@ Run the repeatable end-to-end check:
 make verify
 ```
 
-It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, a two-service trace, correlated logs, Agent CPU, memory, process count, process CPU, process RSS, and graceful sample service shutdown and restart.
+It verifies rejected unauthenticated requests, query limits, successful and failed API outcomes, service and trace host links, Agent navigation identity, a two-service trace, correlated logs, Agent CPU, memory, network, process count, process CPU, process RSS, alerts, and graceful sample service shutdown and restart.
 
 The containerized Agent also reports live CPU, memory, and disk metrics.
 

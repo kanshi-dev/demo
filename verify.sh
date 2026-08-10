@@ -2,6 +2,7 @@
 set -eu
 
 key=$(sed -n 's/^KANSHI_DASHBOARD_KEY=//p' .env)
+demo_agent_id=$(sed -n 's/^DEMO_AGENT_ID=//p' .env)
 base=http://localhost:8080/api/v1
 auth="Authorization: Bearer $key"
 
@@ -52,6 +53,7 @@ previous_trace_id=$(latest_checkout_trace)
 wait_for_http "successful checkout request" "http://localhost:8081/checkout?scenario=success" 200
 wait_for "checkout service" "$base/services" '"serviceName":"checkout"'
 wait_for "payments service" "$base/services" '"serviceName":"payments"'
+wait_for "service host link" "$base/services" "\"agentId\":\"$demo_agent_id\",\"hostName\":\"kanshi-demo\""
 
 attempts=0
 trace_id=$(latest_checkout_trace)
@@ -66,6 +68,7 @@ while [ -z "$trace_id" ] || [ "$trace_id" = "$previous_trace_id" ]; do
 done
 [ "${#trace_id}" = 32 ]
 wait_for "two-service trace" "$base/traces/$trace_id" '"serviceName":"payments"'
+wait_for "trace span host link" "$base/traces/$trace_id" "\"host\":{\"agentId\":\"$demo_agent_id\",\"hostName\":\"kanshi-demo\"}"
 wait_for "correlated checkout log" "$base/logs?traceId=$trace_id" '"body":"checkout completed"'
 wait_for "correlated payment log" "$base/logs?traceId=$trace_id" '"body":"payment approved"'
 
@@ -77,8 +80,13 @@ echo "verified: varied API outcomes"
 wait_for "reporting agent" "$base/agents" '"agentId":"'
 agents=$(curl -fsS -H "$auth" "$base/agents")
 agent_id=$(printf '%s' "$agents" | sed -n 's/.*"agentId":"\([^"]*\)".*/\1/p' | head -1)
+[ "$agent_id" = "$demo_agent_id" ]
+printf '%s' "$agents" | grep -q '"hostName":"kanshi-demo"'
+echo "verified: Agent navigation identity"
 wait_for "CPU metrics" "$base/metrics/aggregate?agentId=$agent_id&name=cpu.used_percent&interval=30s" '"avgValue":'
 wait_for "memory metrics" "$base/metrics/aggregate?agentId=$agent_id&name=mem.used_percent&interval=30s" '"avgValue":'
+wait_for "network send metrics" "$base/metrics/aggregate?agentId=$agent_id&name=net.bytes_sent_per_second&interval=30s" '"avgValue":'
+wait_for "network receive metrics" "$base/metrics/aggregate?agentId=$agent_id&name=net.bytes_recv_per_second&interval=30s" '"avgValue":'
 wait_for "process count" "$base/metrics?agentId=$agent_id&name=process.count" '"name":"process.count"'
 wait_for "process CPU" "$base/metrics?agentId=$agent_id&name=process.cpu_percent" '"name":"process.cpu_percent"'
 wait_for "process RSS" "$base/metrics?agentId=$agent_id&name=process.memory_rss_bytes" '"name":"process.memory_rss_bytes"'

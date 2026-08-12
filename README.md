@@ -63,6 +63,12 @@ The containerized Agent also reports live CPU, memory, and disk metrics.
 
 ![Kanshi agent details in dark mode](imgs/agent-details-dark.png)
 
+Open the **Processes** tab to compare the newest opt-in CPU and resident-memory samples.
+
+![Kanshi Agent processes](imgs/agent-details-process.png)
+
+![Kanshi Agent processes in dark mode](imgs/agent-details-dark-process.png)
+
 ## Try alerting
 
 The Demo Driver creates a `mem.used_percent > 1` rule. Core fires it after the Agent reports and delivers the signed webhook back to the driver.

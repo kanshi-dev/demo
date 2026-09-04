@@ -5,6 +5,8 @@ key=$(sed -n 's/^KANSHI_DASHBOARD_KEY=//p' .env)
 demo_agent_id=$(sed -n 's/^DEMO_AGENT_ID=//p' .env)
 base=http://localhost:8080/api/v1
 auth="Authorization: Bearer $key"
+cpu_load_pid=
+trap 'if [ -n "$cpu_load_pid" ]; then kill "$cpu_load_pid" 2>/dev/null || true; fi' EXIT
 
 wait_for() {
   label=$1
@@ -84,6 +86,7 @@ agent_id=$(printf '%s' "$agents" | sed -n 's/.*"agentId":"\([^"]*\)".*/\1/p' | h
 agent_version=$(printf '%s' "$agents" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1)
 [ "$agent_version" = "$AGENT_VERSION" ]
 printf '%s' "$agents" | grep -q '"hostName":"kanshi-demo"'
+printf '%s' "$agents" | grep -q '"profileTargets":\[{"name":"checkout","discovered":true}\]'
 echo "verified: Agent navigation identity and version"
 wait_for "CPU metrics" "$base/metrics/aggregate?agentId=$agent_id&name=cpu.used_percent&interval=30s" '"avgValue":'
 wait_for "memory metrics" "$base/metrics/aggregate?agentId=$agent_id&name=mem.used_percent&interval=30s" '"avgValue":'
@@ -95,6 +98,34 @@ wait_for "process RSS" "$base/metrics?agentId=$agent_id&name=process.memory_rss_
 wait_for "automatic alert rule" "$base/alerts/rules" '"name":"Demo high memory"'
 wait_for "automatic alert firing" "$base/alerts/events?limit=100" '"ruleName":"Demo high memory"'
 wait_for "delivered alert webhook" "$base/alerts/events?limit=100" '"webhookStatus":"delivered"'
+
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"targetName":"checkout","profileType":"cpu","durationSeconds":30}' "$base/agents/$agent_id/profiles")" = 401 ]
+cpu_capture=$(curl -fsS -X POST -H "$auth" -H 'Content-Type: application/json' -d '{"targetName":"checkout","profileType":"cpu","durationSeconds":30}' "$base/agents/$agent_id/profiles")
+cpu_capture_id=$(printf '%s' "$cpu_capture" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
+[ -n "$cpu_capture_id" ]
+(
+  stop_at=$(($(date +%s) + 40))
+  while [ "$(date +%s)" -lt "$stop_at" ]; do
+    curl -fsS "http://localhost:8081/checkout?scenario=cpu" >/dev/null || true
+  done
+) &
+cpu_load_pid=$!
+wait_for "active CPU profile" "$base/profiles/$cpu_capture_id" '"state":"capturing"'
+wait_for "metrics during profile" "$base/metrics/aggregate?agentId=$agent_id&name=cpu.used_percent&interval=30s" '"avgValue":'
+wait_for "traces during profile" "$base/traces?service=checkout" '"serviceName":"checkout"'
+wait_for "completed CPU profile" "$base/profiles/$cpu_capture_id" '"state":"completed"'
+wait "$cpu_load_pid"
+cpu_load_pid=
+wait_for "CPU flamegraph application frame" "$base/profiles/$cpu_capture_id/flamegraph?sampleType=cpu" 'burnCheckoutCPU'
+[ "$(curl -fsS -H "$auth" "$base/profiles/$cpu_capture_id/download" | wc -c | tr -d ' ')" -gt 0 ]
+echo "verified: authenticated CPU profile capture, continued telemetry, flamegraph, and download"
+
+trace_capture=$(curl -fsS -X POST -H "$auth" -H 'Content-Type: application/json' -d '{"targetName":"checkout","profileType":"trace","durationSeconds":1}' "$base/agents/$agent_id/profiles")
+trace_capture_id=$(printf '%s' "$trace_capture" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
+[ -n "$trace_capture_id" ]
+wait_for "completed execution trace" "$base/profiles/$trace_capture_id" '"state":"completed"'
+[ "$(curl -fsS -H "$auth" "$base/profiles/$trace_capture_id/download" | wc -c | tr -d ' ')" -gt 0 ]
+echo "verified: execution trace capture and download"
 
 docker compose stop -t 10 checkout payments >/dev/null
 docker compose up -d checkout payments >/dev/null

@@ -35,9 +35,12 @@ curl http://localhost:8081/checkout
 curl "http://localhost:8081/checkout?scenario=slow"
 curl "http://localhost:8081/checkout?scenario=declined"
 curl "http://localhost:8081/checkout?scenario=error"
+curl "http://localhost:8081/checkout?scenario=cpu"
 ```
 
 Requests cycle through successful, slow, declined, and unavailable payments. Open **Services** to compare outcomes and latency.
+
+The CPU scenario spends two seconds in `burnCheckoutCPU`. Checkout exposes native Go pprof only on the private Compose network at port 6060, and the Agent discovers the approved `checkout` target across ports 6059 through 6061. Open an Agent's **Profiles** tab to request an on-demand capture; no pprof port is published to the host.
 
 ![Kanshi services and trace search](imgs/services.png)
 

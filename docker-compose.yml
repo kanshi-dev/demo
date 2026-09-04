@@ -86,6 +86,7 @@ services:
       KANSHI_FLUSH_EVERY: 5s
       KANSHI_PROCESS_METRICS: "true"
       KANSHI_PROCESS_TOP_N: "10"
+      KANSHI_PPROF_DISCOVERY: checkout=http://checkout:6059-6061
     volumes:
       - kanshi_agent:/var/lib/kanshi-agent
 
@@ -104,6 +105,8 @@ services:
       PAYMENTS_URL: http://payments:8082/charge
     ports:
       - "127.0.0.1:8081:8081"
+    expose:
+      - "6060"
 
   payments:
     image: ghcr.io/kanshi-dev/demo-payments:latest

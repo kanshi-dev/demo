@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"os/signal"
+	"runtime"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -63,9 +66,12 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/checkout", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("scenario") == "cpu" {
+			burnCheckoutCPU(2 * time.Second)
+		}
 		paymentURL := *paymentsURL
 		query := paymentURL.Query()
-		if scenario := r.URL.Query().Get("scenario"); scenario != "" {
+		if scenario := r.URL.Query().Get("scenario"); scenario != "" && scenario != "cpu" {
 			query.Set("scenario", scenario)
 		}
 		paymentURL.RawQuery = query.Encode()
@@ -101,9 +107,16 @@ func main() {
 		Handler:           otelhttp.NewHandler(mux, "checkout"),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+	pprofServer := &http.Server{Addr: ":6060", ReadHeaderTimeout: 5 * time.Second}
 	go func() {
 		log.Printf("checkout listening on %s", server.Addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
+		log.Printf("checkout pprof listening on %s", pprofServer.Addr)
+		if err := pprofServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
 	}()
@@ -112,6 +125,16 @@ func main() {
 	shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_ = server.Shutdown(shutdown)
+	_ = pprofServer.Shutdown(shutdown)
 	_ = logs.Shutdown(shutdown)
 	_ = traces.Shutdown(shutdown)
+}
+
+func burnCheckoutCPU(duration time.Duration) {
+	deadline := time.Now().Add(duration)
+	value := [32]byte{}
+	for time.Now().Before(deadline) {
+		value = sha256.Sum256(value[:])
+	}
+	runtime.KeepAlive(value)
 }
